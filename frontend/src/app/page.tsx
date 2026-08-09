@@ -69,8 +69,16 @@ export default function Home() {
 
   useEffect(() => {
     fetch(`${API_BASE}/v1/benchmark`)
-      .then((r) => r.json())
-      .then(setBenchmark)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`status ${r.status}`))))
+      .then((data) => {
+        // Guard against a malformed/unexpected response shape (e.g. hitting
+        // the wrong host) silently crashing the page on a missing field.
+        if (data && typeof data.recall_at_1 === "number" && typeof data.recall_at_5 === "number") {
+          setBenchmark(data);
+        } else {
+          setBenchmark(null);
+        }
+      })
       .catch(() => setBenchmark(null));
   }, []);
 
