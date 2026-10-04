@@ -52,13 +52,19 @@ def test_query_respects_top_k():
     assert len(res.json()["citations"]) <= 1
 
 
-def test_benchmark_returns_real_metrics():
+def test_benchmark_serves_scifact_results():
     res = client.get("/v1/benchmark")
     assert res.status_code == 200
     data = res.json()
-    assert data["engine_status"] == "ONLINE"
-    assert 0.0 <= data["recall_at_5"] <= 1.0
-    assert 0.0 <= data["mrr"] <= 1.0
+    assert data["dataset"] == "BEIR SciFact"
+    assert data["retriever"] == "bm25"
+    for key in ("ndcg@10", "recall@5", "mrr@10", "precision@1"):
+        assert 0.0 < data["test"][key] <= 1.0
+
+
+def test_top_k_is_validated():
+    res = client.post("/v1/query", json={"documents": DOCS, "question": "x", "top_k": 0})
+    assert res.status_code == 422
 
 
 def test_root_serves_html():

@@ -10,19 +10,21 @@ demo-sized documents, so rebuilding per-query is a fine tradeoff.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..chunking import chunk_text
 from ..generate import generate_answer, is_generation_available
-from ..index import RetrievalIndex
+from ..index import DEFAULT_INDEX, DEFAULT_PARAMS, make_index
 from ..ingest import extract_text
-from ..synthetic_eval import run_evaluation
+
+BENCHMARK_FILE = Path(__file__).resolve().parent.parent / "benchmark.json"
 
 
 class DocumentInput(BaseModel):
@@ -33,7 +35,7 @@ class DocumentInput(BaseModel):
 class QueryRequest(BaseModel):
     documents: list[DocumentInput]
     question: str
-    top_k: int = 5
+    top_k: int = Field(5, ge=1, le=50)
 
 
 class CitationResult(BaseModel):
@@ -54,11 +56,11 @@ class QueryResponse(BaseModel):
 app = FastAPI(
     title="AI Research Copilot API",
     description=(
-        "Upload documents, ask a question, get ranked passages with citations. "
-        "Retrieval runs entirely server-side with no external API calls; "
-        "generative answers are available when OPENAI_API_KEY is set locally."
+        "Upload documents, ask a question, get ranked passages with citations. Retrieval is BM25, tuned and "
+        "benchmarked on the real BEIR SciFact dataset (see /v1/benchmark), and runs server-side with no "
+        "external API calls; generative answers are available when OPENAI_API_KEY is set locally."
     ),
-    version="1.0.0",
+    version="2.0.0",
     contact={"name": "ai-research-copilot", "url": "https://github.com/UtkarshOver9000/ai-research-copilot"},
     license_info={"name": "MIT"},
 )
@@ -103,7 +105,7 @@ async def query(req: QueryRequest):
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-    index = RetrievalIndex()
+    index = make_index(DEFAULT_INDEX, **DEFAULT_PARAMS)
     index.fit(all_chunks)
     results = index.query(req.question, top_k=req.top_k)
 
@@ -135,10 +137,10 @@ async def query(req: QueryRequest):
     )
 
 
-@app.get("/v1/benchmark", summary="Retrieval benchmark on a synthetic labeled corpus", tags=["Telemetry"])
+@app.get("/v1/benchmark", summary="Retrieval quality on the BEIR SciFact benchmark", tags=["Telemetry"])
 async def benchmark():
-    metrics = run_evaluation(seed=7)
-    return {"engine_status": "ONLINE", **metrics}
+    """Held-out SciFact results for the deployed retriever, produced by `python -m copilot.eval_scifact`."""
+    return json.loads(BENCHMARK_FILE.read_text(encoding="utf-8"))
 
 
 @app.get("/v1/health", include_in_schema=False)

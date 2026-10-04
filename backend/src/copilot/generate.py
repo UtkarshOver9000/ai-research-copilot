@@ -2,8 +2,8 @@
 Optional LLM-based answer synthesis on top of retrieved chunks.
 
 Only active when OPENAI_API_KEY is set. The public live demo runs
-retrieval-only (see api/app.py) -- this is for local use with your own
-key, same pattern as phishvpn-detection's explain.py.
+retrieval-only (see api/app.py); this is for local use with your own key.
+The model can be changed with OPENAI_MODEL.
 """
 
 from __future__ import annotations
@@ -32,7 +32,10 @@ def _build_prompt(question: str, results: list[RetrievedChunk]) -> str:
     )
 
 
-def generate_answer(question: str, results: list[RetrievedChunk], model: str = "gpt-4o-mini") -> str:
+DEFAULT_MODEL = "gpt-4o-mini"
+
+
+def generate_answer(question: str, results: list[RetrievedChunk], model: str | None = None) -> str:
     if not is_generation_available():
         raise RuntimeError("OPENAI_API_KEY is not set; generation is unavailable")
 
@@ -40,5 +43,5 @@ def generate_answer(question: str, results: list[RetrievedChunk], model: str = "
 
     client = OpenAI()
     prompt = _build_prompt(question, results)
-    response = client.responses.create(model=model, input=prompt)
+    response = client.responses.create(model=model or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL), input=prompt)
     return response.output_text.strip()

@@ -1,0 +1,31 @@
+{
+  "dataset": "BEIR SciFact",
+  "source": "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip",
+  "documents": 5183,
+  "test_claims": 300,
+  "retriever": "bm25",
+  "params": {
+    "k1": 0.9,
+    "b": 0.5
+  },
+  "test": {
+    "ndcg@10": 0.6631,
+    "recall@1": 0.5317,
+    "recall@5": 0.7186,
+    "recall@10": 0.7749,
+    "recall@100": 0.8792,
+    "precision@1": 0.55,
+    "precision@5": 0.1553,
+    "mrr@10": 0.6328,
+    "map@100": 0.6281,
+    "success@5": 0.74,
+    "latency_ms_p50": 3.51,
+    "latency_ms_p95": 4.2
+  },
+  "comparison_ndcg@10": {
+    "bm25": 0.6631,
+    "tfidf": 0.5974,
+    "lsa": 0.4904,
+    "lsa_previous_default": 0.3477
+  }
+}

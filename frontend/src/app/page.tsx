@@ -22,14 +22,11 @@ type QueryResponse = {
 };
 
 type Benchmark = {
-  num_documents: number;
-  num_chunks: number;
-  num_queries: number;
-  recall_at_1: number;
-  recall_at_3: number;
-  recall_at_5: number;
-  recall_at_10: number;
-  mrr: number;
+  dataset: string;
+  documents: number;
+  test_claims: number;
+  retriever: string;
+  test: Record<string, number>;
 };
 
 const EXAMPLE_DOCS: Doc[] = [
@@ -73,7 +70,7 @@ export default function Home() {
       .then((data) => {
         // Guard against a malformed/unexpected response shape (e.g. hitting
         // the wrong host) silently crashing the page on a missing field.
-        if (data && typeof data.recall_at_1 === "number" && typeof data.recall_at_5 === "number") {
+        if (data && data.test && typeof data.test["ndcg@10"] === "number" && typeof data.test["recall@5"] === "number") {
           setBenchmark(data);
         } else {
           setBenchmark(null);
@@ -149,19 +146,25 @@ export default function Home() {
         </div>
         <p className="text-sm text-slate-400 max-w-2xl">
           Upload documents or paste text, ask a question, and get ranked passages with real
-          citations back to the source. Retrieval runs entirely server-side (TF-IDF + LSA), no
-          external API calls required.
+          citations back to the source. Retrieval runs entirely server-side (BM25, tuned on the
+          real BEIR SciFact benchmark), no external API calls required.
         </p>
       </header>
 
       {benchmark && (
+        <p className="text-xs text-slate-500 mb-2">
+          Held-out results on {benchmark.dataset}: {benchmark.test_claims} scientific claims searched
+          against {benchmark.documents.toLocaleString()} real abstracts.
+        </p>
+      )}
+      {benchmark && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {[
-            ["Recall@1", `${(benchmark.recall_at_1 * 100).toFixed(0)}%`],
-            ["Recall@5", `${(benchmark.recall_at_5 * 100).toFixed(0)}%`],
-            ["MRR", benchmark.mrr.toFixed(3)],
-            ["Docs benchmarked", benchmark.num_documents],
-            ["Chunks", benchmark.num_chunks],
+            ["nDCG@10", benchmark.test["ndcg@10"].toFixed(3)],
+            ["Top result relevant", `${(benchmark.test["precision@1"] * 100).toFixed(1)}%`],
+            ["Recall@5", `${(benchmark.test["recall@5"] * 100).toFixed(1)}%`],
+            ["MRR@10", benchmark.test["mrr@10"].toFixed(3)],
+            ["p95 search time (5k docs)", `${benchmark.test["latency_ms_p95"].toFixed(1)} ms`],
           ].map(([label, value]) => (
             <div key={label} className="bg-slate-900 border border-slate-800 rounded-lg p-3">
               <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">

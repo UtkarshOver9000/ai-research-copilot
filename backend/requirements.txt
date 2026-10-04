@@ -1,13 +1,10 @@
+# Runtime dependencies (also what Vercel installs for the API).
 numpy>=1.26
 scipy>=1.11
 scikit-learn>=1.4
-fastapi>=0.100.0
-uvicorn>=0.22.0
-pydantic>=2.0
-openai>=1.50.0
-pypdf>=4.0.0
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.6
+pypdf>=4.0
 python-multipart>=0.0.9
-pytest>=7.0.0
-pytest-cov>=4.1.0
-httpx>=0.24.0
-ruff>=0.5.0
+openai>=1.66

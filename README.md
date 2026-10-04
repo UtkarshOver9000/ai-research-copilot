@@ -2,82 +2,121 @@
 
 ![CI](https://github.com/UtkarshOver9000/ai-research-copilot/actions/workflows/ci.yml/badge.svg)
 
-Upload documents (or paste text), ask a question, get ranked passages with real citations
-back to the source — not a black box. Retrieval runs entirely server-side with zero
-external API calls; generative answers are available as an optional local-only feature.
+Upload documents (PDF or text), ask a question, and get the most relevant passages back,
+each with a citation to its source document. Retrieval runs on the server with no external
+API calls. Optionally, if you set your own OpenAI key locally, it also writes a cited
+answer from those passages.
 
-**Live demo: https://ai-research-copilot-3jwt.vercel.app** — no signup, no API key, click
-"Load example" and ask a question.
+The retriever was chosen and tuned on a **real, human-labelled benchmark**: BEIR SciFact,
+which has 5,183 scientific abstracts and 1,109 expert-written claims.
 
-Backend API: https://ai-research-copilot-delta.vercel.app/docs
+**Live demo:** https://ai-research-copilot-3jwt.vercel.app ("Load example", then ask)
+**API docs:** https://ai-research-copilot-delta.vercel.app/docs
 
-## How it works
+## Results on SciFact (300 held-out test claims)
 
-1. **Chunking**: documents are split into overlapping word-window passages.
-2. **Indexing**: TF-IDF + truncated SVD (classic Latent Semantic Analysis) builds a
-   lightweight semantic representation of every chunk.
-3. **Retrieval**: your question goes through the same pipeline, ranked by cosine
-   similarity against every chunk, returned with citations.
-4. **Generation (optional, local only)**: if you set your own `OPENAI_API_KEY`, the top
-   passages get synthesized into a cited natural-language answer. The public live demo
-   runs retrieval-only — no external API cost or abuse surface on a public endpoint.
+| Metric | BM25 (shipped) | TF-IDF | LSA (800 dims) | Previous version: LSA (150 dims) |
+|---|---|---|---|---|
+| **nDCG@10** | **0.6631** | 0.5974 | 0.4904 | 0.3477 |
+| Top result relevant (precision@1) | **55.00%** | 44.33% | 32.33% | 20.00% |
+| Recall@1 | **53.17%** | 42.94% | 30.36% | 18.50% |
+| Recall@5 | **71.86%** | 68.68% | 58.14% | 40.30% |
+| Recall@10 | **77.49%** | 75.93% | 68.70% | 52.10% |
+| Recall@100 | 87.92% | **89.16%** | 87.32% | 79.30% |
+| Precision@5 | **15.53%** | 14.80% | 12.80% | 9.13% |
+| MRR@10 | **0.6328** | 0.5512 | 0.4366 | 0.2997 |
+| MAP@100 | **0.6281** | 0.5479 | 0.4321 | 0.3009 |
+| p95 search time over 5,183 abstracts | 4.2 ms | 4.6 ms | 122.7 ms | 20.9 ms |
+| Index build time | 1.57 s | 1.19 s | 31.72 s | n/a |
 
-**Why TF-IDF+SVD instead of a transformer embedding model** (e.g. sentence-transformers)?
-That gives better retrieval quality but pulls in `torch` and a multi-hundred-MB model,
-which doesn't fit Vercel's serverless size limits. TF-IDF+SVD is scikit-learn only,
-trains in milliseconds per request, and — per the benchmark below — is still genuinely
-useful. This is a documented tradeoff, not a hidden one.
+Most SciFact claims have exactly one relevant abstract (1.13 per claim in the test split),
+so precision@5 can be at most about 23% and the precision@k numbers are naturally low;
+recall@k and nDCG@10 are the meaningful ones.
 
-## Retrieval benchmark
+The BM25 implementation here scores 0.6631 nDCG@10. The BEIR paper reports 0.665 for its
+Elasticsearch BM25 baseline on the same split, which is a good sanity check that both the
+retriever and the metrics are implemented correctly.
 
-No real labeled Q&A dataset exists for this, so `backend/src/copilot/synthetic_eval.py`
-generates one: 40 synthetic documents sharing prefixes and metric types with each other
-(e.g. multiple "Team X" documents, multiple documents reporting "uptime" in the same
-quarter) so queries have genuine, confusable distractors — not just irrelevant filler.
+**Moving from the previous LSA setup to tuned BM25 nearly doubled nDCG@10 (0.348 → 0.663)**,
+and the top result is now relevant for 55% of claims instead of 20%.
 
-```bash
-cd backend && PYTHONPATH=src python -m copilot.synthetic_eval
-```
+On all 1,109 labelled claims (train and test together), BM25 scores nDCG@10 0.6663,
+recall@5 72.06% and MRR@10 0.6357, consistent with the held-out numbers.
 
-| Metric | Score |
+### What this means for a user
+
+| Question a user cares about | Answer (held-out test) |
 |---|---|
-| Recall@1 | 95.0% |
-| Recall@3 | 100.0% |
-| Recall@5 | 100.0% |
-| Recall@10 | 100.0% |
-| MRR | 0.975 |
+| How often is a relevant abstract on the first screen (top 5)? | 74.0% of claims |
+| How far down is the first relevant result, typically? | position 1 (median) |
+| How many claims have no relevant abstract in the top 100? | 34 of 300 |
+| How long does a search take over 5,183 abstracts? | 3.5 ms median, 4.2 ms p95 (laptop CPU) |
+| What does a search cost in API fees? | $0. Retrieval makes no external calls |
 
-An earlier, easier version of this benchmark (12 non-confusable documents) scored a
-suspicious 1.0/1.0 — not a real result, just an under-powered test. Scaling to 40
-documents with deliberate distractors is what makes 95% at strict top-1 credible.
+## How the benchmark works
 
-## Real bugs found while building this
+`backend/src/copilot/eval_scifact.py`:
 
-- **`TruncatedSVD` crashed on small corpora.** `n_components` was bounded by chunk count
-  but not by the actual TF-IDF vocabulary size, so `n_components(150) > n_features(149)`
-  on a modest document set. Fixed in `index.py`.
-- **A misconfigured API key crashed retrieval.** This machine had a literal
-  `OPENAI_API_KEY=your_api_key_here` set system-wide (leftover from a different project's
-  README example). `/v1/query` now catches generation failures and falls back to
-  retrieval-only instead of failing the whole request — verified against that exact key.
-- **The deployed frontend crashed on load** with `Cannot read properties of undefined
-  (reading 'toFixed')`. Root cause: `NEXT_PUBLIC_API_BASE_URL` wasn't set in the Vercel
-  project, so the build fell back to a `localhost:8000` default that's unreachable in
-  production, and the resulting bad response wasn't shape-checked before being rendered.
-  Fixed by validating the response shape before use, regardless of what the deployment
-  config is set to.
+1. Every abstract goes through the **same chunker the API uses** (220-word windows, 40
+   words of overlap), giving 8,620 chunks. A document's score is its best chunk's score.
+2. Each retriever's settings are tuned on the 809 **train** claims only, using a grid
+   search on nDCG@10:
+   - BM25: k1 ∈ {0.6, 0.9, 1.2, 1.5, 2.0} × b ∈ {0.3, 0.5, 0.75, 0.9}. Best: k1 = 0.9,
+     b = 0.5 (train nDCG@10 0.6675).
+   - TF-IDF: sublinear vs raw term frequency. Best: sublinear (0.6076).
+   - LSA: 50 to 800 SVD components. Best: 800 (0.4894), still rising at the edge of the
+     grid but already about 20× slower than BM25 to build.
+3. The tuned retrievers are scored **once** on the 300 standard BEIR **test** claims.
+
+Retrieval involves no gradient training, so there are no epochs or loss curves. The
+tuning curves below play that role:
+
+![Tuning curves and recall@k](reports/figures/scifact_tuning_and_recall.png)
+
+Full per-retriever numbers, both query sets, and every tuning point are in
+`reports/scifact_metrics.json`. The API serves the headline numbers from
+`backend/src/copilot/benchmark.json` at `GET /v1/benchmark`.
+
+## Data
+
+| Dataset | Contents | License |
+|---|---|---|
+| [BEIR SciFact](https://github.com/beir-cellar/beir) ([zip](https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip), SHA-256 `536e1444…0165`) | 5,183 abstracts, 1,109 claims, 1,258 relevance judgements (919 train, 339 test) | claims CC BY 4.0; abstracts ODC-By 1.0 (S2ORC) |
+
+`python scripts/download_scifact.py` downloads the archive, verifies the checksum and
+extracts it to `data/scifact/`. The data is not committed.
+
+## How the app works
+
+1. **Ingest**: PDFs are converted to text with `pypdf`; plain text is used as-is.
+2. **Chunk**: 220-word windows with 40 words of overlap, so passages stay readable.
+3. **Retrieve**: BM25 (k1 = 0.9, b = 0.5) ranks every chunk; the top k come back with
+   their document name, position and score.
+4. **Generate (optional, local only)**: with `OPENAI_API_KEY` set, the top passages are
+   sent to the OpenAI Responses API (model `gpt-4o-mini`, override with `OPENAI_MODEL`)
+   with instructions to answer only from them and cite `[n]`. The public demo never calls
+   a paid API. If the key is invalid, the request still returns the retrieved passages.
+
+The API is stateless: each `/v1/query` builds the index from the documents in that
+request, because a serverless deployment can't guarantee two requests reach the same
+instance. Index build time is milliseconds for demo-sized inputs.
+
+**Why not a neural embedding model?** It might retrieve better, but it pulls in `torch`
+and a model of hundreds of MB, which doesn't fit a Vercel serverless function. Measured
+on SciFact, tuned BM25 is the best of the three options that do fit.
 
 ## Run it locally
 
-**Backend:**
+Backend:
+
 ```bash
 cd backend
-python -m venv .venv && .venv/Scripts/activate  # or source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 PYTHONPATH=src python -m uvicorn copilot.api.app:app --reload --port 8000
 ```
 
-**Frontend:**
+Frontend:
+
 ```bash
 cd frontend
 npm install
@@ -85,50 +124,41 @@ echo "NEXT_PUBLIC_API_BASE_URL=http://localhost:8000" > .env.local
 npm run dev
 ```
 
+Reproduce the benchmark (about 11 minutes on a laptop CPU):
+
+```bash
+python scripts/download_scifact.py
+cd backend && PYTHONPATH=src python -m copilot.eval_scifact --data-dir ../data/scifact --out ../reports/scifact_metrics.json
+```
+
 ## Tests
 
 ```bash
-cd backend
-pytest --cov=src --cov-report=term-missing
+cd backend && pytest --cov=src
 ```
 
-25 tests, 95% coverage: chunking, the retrieval index, PDF/text ingestion, the synthetic
-benchmark, and the API (including the graceful-degradation-on-bad-key regression test).
-`npm run lint && npm run build` for the frontend. CI runs both on every push/PR across
-Python 3.10–3.12.
+36 tests (82% line coverage) cover chunking, all three retrievers, the ranking metrics
+checked against hand-computed values (nDCG, MAP, MRR, recall, precision), BEIR file
+loading, PDF/text ingestion and the API, including graceful fallback when an OpenAI key
+is invalid. CI runs backend lint and tests on Python 3.11 to 3.13, plus frontend lint and
+build.
 
-## Project layout
+## Limitations
 
-```
-backend/
-  src/copilot/
-    chunking.py       word-window document splitting
-    index.py           TF-IDF + SVD retrieval index
-    generate.py         optional local LLM answer synthesis
-    synthetic_eval.py   labeled benchmark (Recall@k, MRR)
-    ingest.py            PDF/text extraction
-    api/app.py            FastAPI app (stateless: rebuilds the index per request)
-  tests/
-frontend/
-  src/app/page.tsx        document upload/paste, question box, ranked citations
-```
+- SciFact measures retrieval of scientific abstracts for claims. Results on other
+  document types (contracts, code, chat logs) may differ.
+- BM25 matches words, not meaning: a question that uses different wording from the
+  document can miss it. 34 of 300 test claims had no relevant abstract in the top 100.
+- Generated answers are not benchmarked. Only retrieval is measured here.
 
-## Limitations & honest notes
+## References
 
-- **Stateless by design.** Each query rebuilds the index from the documents sent in that
-  same request rather than keeping server-side session state, since serverless
-  deployments can't guarantee two requests land on the same warm instance. Fine for
-  demo-sized documents; not optimized for large corpora queried repeatedly.
-- **TF-IDF+SVD, not a transformer embedding model** — see "How it works" above. Good
-  enough to beat 95% Recall@1 on a deliberately hard synthetic benchmark, not
-  state-of-the-art on nuanced paraphrased queries.
-- **The public live demo has no labeled real-world benchmark**, only the synthetic one
-  above — same caveat as this author's other repos: real-world validation is still
-  the natural next step, not something to claim without evidence.
-- **Generation is local-only** by design (see architecture above), not a limitation to
-  fix — a public endpoint calling a paid LLM API is a cost/abuse surface this project
-  deliberately avoids.
+- D. Wadden et al., "Fact or Fiction: Verifying Scientific Claims", EMNLP 2020.
+- N. Thakur et al., "BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of
+  Information Retrieval Models", NeurIPS 2021 Datasets and Benchmarks.
+- S. Robertson and H. Zaragoza, "The Probabilistic Relevance Framework: BM25 and Beyond",
+  2009.
 
 ## License
 
-MIT
+MIT for the code. SciFact keeps its own licenses (see Data).

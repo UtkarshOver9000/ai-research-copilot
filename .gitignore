@@ -16,3 +16,6 @@ frontend/.env*.local
 # Misc
 *.log
 .DS_Store
+
+# Benchmark data is downloaded, not committed
+data/

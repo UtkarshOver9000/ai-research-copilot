@@ -1,0 +1,429 @@
+{
+  "dataset": {
+    "name": "BEIR SciFact",
+    "source": "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip",
+    "paper": "Wadden et al., 'Fact or Fiction: Verifying Scientific Claims', EMNLP 2020; BEIR, NeurIPS 2021",
+    "documents": 5183,
+    "chunks": 8620,
+    "train_queries": 809,
+    "test_queries": 300
+  },
+  "protocol": "hyperparameters tuned on train claims only; metrics below are on held-out test claims",
+  "best_retriever": "bm25",
+  "results": {
+    "bm25": {
+      "params": {
+        "k1": 0.9,
+        "b": 0.5
+      },
+      "index_build_seconds": 1.57,
+      "test": {
+        "recall@1": 0.5317,
+        "precision@1": 0.55,
+        "recall@3": 0.6733,
+        "precision@3": 0.2378,
+        "recall@5": 0.7186,
+        "precision@5": 0.1553,
+        "recall@10": 0.7749,
+        "precision@10": 0.086,
+        "recall@100": 0.8792,
+        "precision@100": 0.01,
+        "ndcg@10": 0.6631,
+        "mrr@10": 0.6328,
+        "map@100": 0.6281,
+        "success@5": 0.74,
+        "queries": 300,
+        "hit@1 (top result relevant)": 0.55,
+        "median_rank_of_first_relevant": 1.0,
+        "queries_with_no_relevant_in_top100": 34,
+        "latency_ms_p50": 3.51,
+        "latency_ms_p95": 4.2
+      },
+      "all_labelled_queries": {
+        "recall@1": 0.5375,
+        "precision@1": 0.5609,
+        "recall@3": 0.6662,
+        "precision@3": 0.2396,
+        "recall@5": 0.7206,
+        "precision@5": 0.1587,
+        "recall@10": 0.7829,
+        "precision@10": 0.0874,
+        "recall@100": 0.8944,
+        "precision@100": 0.0101,
+        "ndcg@10": 0.6663,
+        "mrr@10": 0.6357,
+        "map@100": 0.6304,
+        "success@5": 0.7394,
+        "queries": 1109,
+        "hit@1 (top result relevant)": 0.5609,
+        "median_rank_of_first_relevant": 1.0,
+        "queries_with_no_relevant_in_top100": 110,
+        "latency_ms_p50": 2.52,
+        "latency_ms_p95": 3.94
+      }
+    },
+    "tfidf": {
+      "params": {
+        "sublinear_tf": true
+      },
+      "index_build_seconds": 1.19,
+      "test": {
+        "recall@1": 0.4294,
+        "precision@1": 0.4433,
+        "recall@3": 0.5921,
+        "precision@3": 0.21,
+        "recall@5": 0.6868,
+        "precision@5": 0.148,
+        "recall@10": 0.7593,
+        "precision@10": 0.0837,
+        "recall@100": 0.8916,
+        "precision@100": 0.0101,
+        "ndcg@10": 0.5974,
+        "mrr@10": 0.5512,
+        "map@100": 0.5479,
+        "success@5": 0.7067,
+        "queries": 300,
+        "hit@1 (top result relevant)": 0.4433,
+        "median_rank_of_first_relevant": 2.0,
+        "queries_with_no_relevant_in_top100": 31,
+        "latency_ms_p50": 3.23,
+        "latency_ms_p95": 4.64
+      },
+      "all_labelled_queries": {
+        "recall@1": 0.4382,
+        "precision@1": 0.4563,
+        "recall@3": 0.604,
+        "precision@3": 0.217,
+        "recall@5": 0.6894,
+        "precision@5": 0.1509,
+        "recall@10": 0.7639,
+        "precision@10": 0.0849,
+        "recall@100": 0.8977,
+        "precision@100": 0.0102,
+        "ndcg@10": 0.6049,
+        "mrr@10": 0.5605,
+        "map@100": 0.5562,
+        "success@5": 0.7087,
+        "queries": 1109,
+        "hit@1 (top result relevant)": 0.4563,
+        "median_rank_of_first_relevant": 1.0,
+        "queries_with_no_relevant_in_top100": 107,
+        "latency_ms_p50": 2.8,
+        "latency_ms_p95": 3.8
+      }
+    },
+    "lsa": {
+      "params": {
+        "n_components": 800
+      },
+      "index_build_seconds": 31.72,
+      "test": {
+        "recall@1": 0.3036,
+        "precision@1": 0.3233,
+        "recall@3": 0.4723,
+        "precision@3": 0.1711,
+        "recall@5": 0.5814,
+        "precision@5": 0.128,
+        "recall@10": 0.687,
+        "precision@10": 0.0767,
+        "recall@100": 0.8732,
+        "precision@100": 0.0099,
+        "ndcg@10": 0.4904,
+        "mrr@10": 0.4366,
+        "map@100": 0.4321,
+        "success@5": 0.6067,
+        "queries": 300,
+        "hit@1 (top result relevant)": 0.3233,
+        "median_rank_of_first_relevant": 3.0,
+        "queries_with_no_relevant_in_top100": 36,
+        "latency_ms_p50": 88.62,
+        "latency_ms_p95": 122.73
+      },
+      "all_labelled_queries": {
+        "recall@1": 0.3082,
+        "precision@1": 0.3282,
+        "recall@3": 0.4769,
+        "precision@3": 0.1749,
+        "recall@5": 0.5667,
+        "precision@5": 0.1268,
+        "recall@10": 0.6715,
+        "precision@10": 0.0761,
+        "recall@100": 0.8719,
+        "precision@100": 0.01,
+        "ndcg@10": 0.4897,
+        "mrr@10": 0.4391,
+        "map@100": 0.4367,
+        "success@5": 0.5897,
+        "queries": 1109,
+        "hit@1 (top result relevant)": 0.3282,
+        "median_rank_of_first_relevant": 2.0,
+        "queries_with_no_relevant_in_top100": 135,
+        "latency_ms_p50": 75.27,
+        "latency_ms_p95": 99.18
+      }
+    },
+    "lsa_previous_default": {
+      "params": {
+        "n_components": 150
+      },
+      "test": {
+        "recall@1": 0.185,
+        "precision@1": 0.2,
+        "recall@3": 0.3272,
+        "precision@3": 0.1233,
+        "recall@5": 0.403,
+        "precision@5": 0.0913,
+        "recall@10": 0.521,
+        "precision@10": 0.06,
+        "recall@100": 0.793,
+        "precision@100": 0.0091,
+        "ndcg@10": 0.3477,
+        "mrr@10": 0.2997,
+        "map@100": 0.3009,
+        "success@5": 0.4267,
+        "queries": 300,
+        "hit@1 (top result relevant)": 0.2,
+        "median_rank_of_first_relevant": 5.0,
+        "queries_with_no_relevant_in_top100": 60,
+        "latency_ms_p50": 16.89,
+        "latency_ms_p95": 20.91
+      }
+    }
+  },
+  "tuning": {
+    "bm25": {
+      "best_params": {
+        "k1": 0.9,
+        "b": 0.5
+      },
+      "curve": [
+        {
+          "params": {
+            "k1": 0.6,
+            "b": 0.3
+          },
+          "train_ndcg@10": 0.6636
+        },
+        {
+          "params": {
+            "k1": 0.6,
+            "b": 0.5
+          },
+          "train_ndcg@10": 0.6657
+        },
+        {
+          "params": {
+            "k1": 0.6,
+            "b": 0.75
+          },
+          "train_ndcg@10": 0.6626
+        },
+        {
+          "params": {
+            "k1": 0.6,
+            "b": 0.9
+          },
+          "train_ndcg@10": 0.6617
+        },
+        {
+          "params": {
+            "k1": 0.9,
+            "b": 0.3
+          },
+          "train_ndcg@10": 0.6674
+        },
+        {
+          "params": {
+            "k1": 0.9,
+            "b": 0.5
+          },
+          "train_ndcg@10": 0.6675
+        },
+        {
+          "params": {
+            "k1": 0.9,
+            "b": 0.75
+          },
+          "train_ndcg@10": 0.6633
+        },
+        {
+          "params": {
+            "k1": 0.9,
+            "b": 0.9
+          },
+          "train_ndcg@10": 0.662
+        },
+        {
+          "params": {
+            "k1": 1.2,
+            "b": 0.3
+          },
+          "train_ndcg@10": 0.6671
+        },
+        {
+          "params": {
+            "k1": 1.2,
+            "b": 0.5
+          },
+          "train_ndcg@10": 0.6654
+        },
+        {
+          "params": {
+            "k1": 1.2,
+            "b": 0.75
+          },
+          "train_ndcg@10": 0.6619
+        },
+        {
+          "params": {
+            "k1": 1.2,
+            "b": 0.9
+          },
+          "train_ndcg@10": 0.6591
+        },
+        {
+          "params": {
+            "k1": 1.5,
+            "b": 0.3
+          },
+          "train_ndcg@10": 0.6659
+        },
+        {
+          "params": {
+            "k1": 1.5,
+            "b": 0.5
+          },
+          "train_ndcg@10": 0.665
+        },
+        {
+          "params": {
+            "k1": 1.5,
+            "b": 0.75
+          },
+          "train_ndcg@10": 0.6627
+        },
+        {
+          "params": {
+            "k1": 1.5,
+            "b": 0.9
+          },
+          "train_ndcg@10": 0.6569
+        },
+        {
+          "params": {
+            "k1": 2.0,
+            "b": 0.3
+          },
+          "train_ndcg@10": 0.6612
+        },
+        {
+          "params": {
+            "k1": 2.0,
+            "b": 0.5
+          },
+          "train_ndcg@10": 0.6629
+        },
+        {
+          "params": {
+            "k1": 2.0,
+            "b": 0.75
+          },
+          "train_ndcg@10": 0.6576
+        },
+        {
+          "params": {
+            "k1": 2.0,
+            "b": 0.9
+          },
+          "train_ndcg@10": 0.6489
+        }
+      ]
+    },
+    "tfidf": {
+      "best_params": {
+        "sublinear_tf": true
+      },
+      "curve": [
+        {
+          "params": {
+            "sublinear_tf": true
+          },
+          "train_ndcg@10": 0.6076
+        },
+        {
+          "params": {
+            "sublinear_tf": false
+          },
+          "train_ndcg@10": 0.5736
+        }
+      ]
+    },
+    "lsa": {
+      "best_params": {
+        "n_components": 800
+      },
+      "curve": [
+        {
+          "params": {
+            "n_components": 50
+          },
+          "train_ndcg@10": 0.2053
+        },
+        {
+          "params": {
+            "n_components": 100
+          },
+          "train_ndcg@10": 0.2856
+        },
+        {
+          "params": {
+            "n_components": 150
+          },
+          "train_ndcg@10": 0.3433
+        },
+        {
+          "params": {
+            "n_components": 200
+          },
+          "train_ndcg@10": 0.3638
+        },
+        {
+          "params": {
+            "n_components": 300
+          },
+          "train_ndcg@10": 0.4056
+        },
+        {
+          "params": {
+            "n_components": 400
+          },
+          "train_ndcg@10": 0.4288
+        },
+        {
+          "params": {
+            "n_components": 600
+          },
+          "train_ndcg@10": 0.463
+        },
+        {
+          "params": {
+            "n_components": 800
+          },
+          "train_ndcg@10": 0.4894
+        }
+      ]
+    }
+  },
+  "business": {
+    "claims_with_a_relevant_abstract_in_top_5": 0.74,
+    "median_results_read_before_first_relevant": 1.0,
+    "p95_query_latency_ms_over_5k_abstracts": 4.2,
+    "index_build_seconds_5k_abstracts": 1.57,
+    "external_api_cost_per_query_usd": 0.0
+  },
+  "environment": {
+    "python": "3.11.9",
+    "scikit_learn": "1.9.1"
+  },
+  "runtime_seconds": 647.3
+}

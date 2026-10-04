@@ -14,28 +14,25 @@ jobs:
         working-directory: backend
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
-      - name: Lint with ruff
+      - name: Lint
         run: ruff check .
 
-      - name: Run tests with coverage
+      - name: Tests
         run: pytest --cov=src --cov-report=term-missing
-
-      - name: Retrieval benchmark
-        run: python -m copilot.synthetic_eval
-        env:
-          PYTHONPATH: src
 
   frontend:
     runs-on: ubuntu-latest
@@ -43,13 +40,13 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "22"
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
