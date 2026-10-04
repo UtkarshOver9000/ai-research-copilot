@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "copilot"
 version = "2.0.0"
 description = "Citation-first document Q&A: BM25 retrieval benchmarked on BEIR SciFact, optional LLM answers"
-readme = "../README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
