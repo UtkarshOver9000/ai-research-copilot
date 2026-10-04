@@ -11,7 +11,7 @@ demo-sized documents, so rebuilding per-query is a fine tradeoff.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile
@@ -102,7 +102,7 @@ async def query(req: QueryRequest):
             citations=[],
             answer=None,
             generation_available=is_generation_available(),
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     index = make_index(DEFAULT_INDEX, **DEFAULT_PARAMS)
@@ -133,7 +133,7 @@ async def query(req: QueryRequest):
         citations=citations,
         answer=answer,
         generation_available=is_generation_available(),
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )
 
 

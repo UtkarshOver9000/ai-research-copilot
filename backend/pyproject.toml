@@ -8,7 +8,7 @@ version = "2.0.0"
 description = "Citation-first document Q&A: BM25 retrieval benchmarked on BEIR SciFact, optional LLM answers"
 readme = "../README.md"
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26",
   "scipy>=1.11",
@@ -36,7 +36,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
